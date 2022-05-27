@@ -1,0 +1,39 @@
+<html>
+    <head>
+        <title>WebRTC Room</title>
+        <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+        <style>
+            html, body {
+                background: #000; 
+                size: 100%;
+                margin: 0%;
+            }
+            .videoContainer {
+                display: flex; 
+                background: #FFF1;
+                padding: 3px;
+                border: 2px solid #FFF;
+            }
+            .videoTrack {
+                width: 400px;
+                height: 400px;
+                border: 1px solid #F00;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="streamContainer">
+            
+        </div>
+        <script>
+            var print = console.log;
+            
+            function addDynamicJS(script) {
+                let elm = document.createElement("script");
+                elm.setAttribute("src", script);
+                document.body.appendChild(elm);
+            }
+            addDynamicJS("client.js");
+        </script>
+    </body>
+</html>
