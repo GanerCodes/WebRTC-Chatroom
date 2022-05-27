@@ -22,6 +22,9 @@
         </style>
     </head>
     <body>
+        <div id="selfContainer">
+            
+        </div>
         <div id="streamContainer">
             
         </div>
@@ -33,6 +36,7 @@
                 elm.setAttribute("src", script);
                 document.body.appendChild(elm);
             }
+            addDynamicJS("layout.js");
             addDynamicJS("client.js");
         </script>
     </body>

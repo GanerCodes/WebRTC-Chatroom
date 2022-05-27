@@ -18,83 +18,23 @@ function broadcast(type, data) {
     send_data({ ...data, ...{'type': type} });
 }
 
+function addDevices(...devices) {
+    for(const [device, type] of devices) {
+        self['tracks'][device.id] = device;
+        self['layout'][device.id] = type;
+    }
+    
+    broadcastLayout();
+    broadcastTracks(devices.map(x => x[0]));
+}
+
 function sendVideoDummy() {
-    navigator.mediaDevices.getUserMedia({"video": true}).then(stream => {
-        let track = new MediaStream([stream.getTracks()[0]]);
-        let trackID = track['id'];
-        
-        self['tracks'][trackID] = track;
-        self['layout'][trackID] = "camera";
-        
-        broadcastTrack(track);
-        broadcastLayout();
+    navigator.mediaDevices.getUserMedia(
+        {"video": true, "audio": true}
+    ).then(stream => {
+        addDevices([new MediaStream([stream.getVideoTracks()[0]]), "video"],
+                   [new MediaStream([stream.getAudioTracks()[0]]), "audio"]);
     })
-}
-
-function createVideoContainer(uuid) {
-    const elm = document.createElement("div");
-    
-    elm.setAttribute("id", uuid);
-    elm.className = "videoContainer";
-    return elm;
-}
-
-function createTrackElement(track, id) {
-    const elm = document.createElement("video");
-    elm.setAttribute("autoplay", true);
-    elm.muted = true;
-    elm.srcObject = new MediaStream([track]);
-    
-    elm.setAttribute("id", id)
-    elm.className = "videoTrack";
-    return elm;
-}
-
-function removeDisconnectedStreams() {
-    for(const elm of document.getElementById("videoContainer")) {
-        if(!(elm.id in peers)) elm.remove();
-    }
-}
-
-function applyLayout(uuid, layout) {
-    const streamContainer = document.getElementById("streamContainer");
-    
-    layout = layout || peers[uuid]['layout'];
-    const peer_tracks = peers[uuid]['tracks'] || {};
-    
-    const l_b = Object.keys(layout).length;
-    const p_b = Object.keys(peer_tracks).length;
-    
-    let container = document.getElementById(uuid)
-    if(container && (!l_b || !p_b)) {
-        container.remove();
-        return;
-    }else if(!container && l_b && p_b) {
-        print("made container")
-        container = createVideoContainer(uuid);
-        peers[uuid]['container']
-        streamContainer.appendChild(container);
-    }else if(!container) {
-        return;
-    }
-    
-    const currentTrackElements = container.getElementsByClassName("videoTrack");
-    for(const elm of currentTrackElements) {
-        if(!(elm.id in peer_tracks)) elm.remove();
-    }
-    
-    for(const [id, type] of Object.entries(layout)) {
-        if(!peer_tracks[id]) continue;
-        
-        if(document.getElementById(id)) continue;
-        const track = peer_tracks[id];
-        print(`Adding ${type} (${id}) to layout.`)
-        container.appendChild(createTrackElement(track, id))
-    }
-}
-function applyLayouts() {
-    for(const uuid of Object.keys(peers)) applyLayout(uuid);
-    removeDisconnectedStreams();
 }
 
 function sendMessage(peer, type, message) {
@@ -114,7 +54,7 @@ function broadcastLayout(layout) {
 }
 
 function sendTrack(uuid, track) {
-    let q = peers[uuid]['connection'].addStream(track);
+    peers[uuid]['connection'].addStream(track);
     updateDescription(uuid);
 }
 function broadcastTrack(track) {
@@ -126,7 +66,7 @@ function sendTracks(uuid, tracks) {
     for(const track of tracks) peers[uuid]['connection'].addStream(track);
     updateDescription(uuid);
 }
-function broadcastTracks(tracks) {
+function broadcastTracks(...tracks) {
     for(const uuid of Object.keys(peers)) sendTracks(uuid, tracks);
 }
 
@@ -210,6 +150,7 @@ socket.onmessage = (m) => {
         case "removePeer": {
             if('connection' in peers[peer_uuid])
                 peers[peer_uuid]['connection'].close();
+            if(peers[peer_uuid]['container']) peers[peer_uuid]['container'].remove();
             delete peers[peer_uuid];
             
             log(`- Peer`);
