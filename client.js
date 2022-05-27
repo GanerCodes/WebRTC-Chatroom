@@ -22,6 +22,9 @@ function addDevices(...devices) {
     for(const [device, type] of devices) {
         self['tracks'][device.id] = device;
         self['layout'][device.id] = type;
+        if(["video"].includes(type)) {
+            addSelfPreview(device.id);
+        }
     }
     
     broadcastLayout();

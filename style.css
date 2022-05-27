@@ -1,0 +1,57 @@
+html, body {
+    background: #000; 
+    size: 100%;
+    margin: 0%;
+}
+.trackContainer, .selfContainer {
+    display: flex;
+    height: 400px;
+    background: #020202;
+    padding: 3px;
+    border: 2px solid #222;
+}
+.track, .selfTrack {
+    size: 400px;
+    border: 1px solid #555;
+}
+
+.deviceSelectorHolder {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    flex-wrap: wrap;
+}
+.addSourceButton {
+    width: 50px;
+    height: 50px;
+    font-size: 14px;
+    background-color: #111;
+    color: #CCC;
+    border: none;
+}
+.addSourceButton:hover {
+    background-color: #151515;
+    color: #DDD;
+    font-size: 16px;
+    cursor: hand;
+}
+.addSourceButton:active {
+    background-color: #222;
+    color: #FFF;
+}
+
+.audioTrack {
+    size: 200px;
+    background: #500;
+}
+
+.selfContainer {
+    display: flex;
+    size: 100px;
+    border: 1px solid #333;
+}
+.selfTrack {
+    width: 100px;
+    height: 100px;
+    border: 1px solid #FFF;
+}

@@ -2,28 +2,21 @@
     <head>
         <title>WebRTC Room</title>
         <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-        <style>
-            html, body {
-                background: #000; 
-                size: 100%;
-                margin: 0%;
-            }
-            .videoContainer {
-                display: flex; 
-                background: #FFF1;
-                padding: 3px;
-                border: 2px solid #FFF;
-            }
-            .videoTrack {
-                width: 400px;
-                height: 400px;
-                border: 1px solid #F00;
-            }
-        </style>
+        <link rel="stylesheet" href="style.css">
     </head>
     <body>
         <div id="selfContainer">
-            
+            <div class="deviceSelectorHolder" id="deviceSelectorHolder"></div>
+            <script>
+                const base = document.getElementById("deviceSelectorHolder");
+                for(const t of ['cam', 'mic', 'spk', 'scr']) {
+                    const elm = document.createElement("button");
+                    elm.className = "addSourceButton";
+                    elm.innerHTML = t;
+                    elm.onclick = () => addSourcePrompt(t);
+                    base.appendChild(elm);
+                }
+            </script>
         </div>
         <div id="streamContainer">
             
