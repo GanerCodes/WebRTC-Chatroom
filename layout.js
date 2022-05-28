@@ -1,3 +1,6 @@
+const SELF_SIZE = 128;
+const OTHER_SIZE = 512;
+
 function createTrackContainer(uuid) {
     const elm = document.createElement("div");
     
@@ -6,25 +9,38 @@ function createTrackContainer(uuid) {
     return elm;
 }
 
+function boxTrackElement(element, size) {
+    let elm = document.createElement("div");
+    elm.className = "trackBox";
+    const sz = size + "px";
+    elm.appendChild(element);
+    elm.style['width' ] = sz;
+    elm.style['height'] = sz;
+    return elm;
+}
+
 function createTrackElement(track, id, type) {
     let elm;
     if(type == "video") {
         elm = document.createElement("video");
+        elm.className = "track";
         elm.muted = true;
     }else{
         elm = document.createElement("audio");
+        elm.className = "track audioTrack";
         elm.muted = false;
+        elm.controls = true;
     }
     
     elm.setAttribute("autoplay", true);
     elm.srcObject = new MediaStream([track]);
     
-    elm.setAttribute("id", id)
-    elm.className = "track audioTrack";
+    elm = boxTrackElement(elm, OTHER_SIZE);
+    elm.setAttribute("id", id);
     return elm;
 }
 
-function addSelfPreview(trackID) {
+function addSelfPreview(trackID, type) {
     const selfContainer = document.getElementById("selfContainer");
     const device = self['tracks'][trackID];
     const elm = document.createElement("video");
@@ -36,7 +52,7 @@ function addSelfPreview(trackID) {
     elm.setAttribute("id", trackID)
     elm.className = "selfTrack";
     
-    selfContainer.appendChild(elm);
+    selfContainer.appendChild(boxTrackElement(elm, SELF_SIZE));
 }
 
 function applyLayout(uuid, layout) {
@@ -60,7 +76,7 @@ function applyLayout(uuid, layout) {
         return;
     }
     
-    const currentTrackElements = container.getElementsByClassName("track");
+    const currentTrackElements = container.getElementsByClassName("trackBox");
     for(const elm of currentTrackElements) {
         if(!(elm.id in peer_tracks)) elm.remove();
     }
@@ -98,12 +114,29 @@ function addSourcePrompt(type) {
         const mapping = {'cam': 'videoinput',
                          'mic': 'audioinput',
                          'spk': 'audiooutput'};
-        devices = device_list.filter(x => x.kind == mapping[type]);
+        
         deviceNameMapping = {}
-        for(const device of devices) {
-            deviceNameMapping[device.label] = device;
+        device_list.filter(x => x.kind == mapping[type]).forEach(d => deviceNameMapping[d.label] = d);
+        
+        let func;
+        switch(type) {
+            case "cam": {
+                func = (l) => {
+                    print(l);
+                    navigator.mediaDevices.getUserMedia({"video": true, label: l}).then(stream => {
+                        addDevices([new MediaStream([stream.getVideoTracks()[0]]), "video"]);
+                    });
+                }
+            } break;
+            case "mic": {
+                func = (l) => {
+                    navigator.mediaDevices.getUserMedia({"audio": true, label: l}).then(stream => {
+                        addDevices([new MediaStream([stream.getAudioTracks()[0]]), "audio"]);
+                    })
+                }
+            } break;
         }
-        print(deviceNameMapping);
+        promptSelection(deviceNameMapping, func);
     });
 }
 
@@ -113,13 +146,26 @@ function promptSelection(mapping, callback) {
     const selector = document.createElement("select");
     selector.className = "popupSelector"
     base.appendChild(selector);
+    
+    const def = document.createElement("option");
+    def.innerHTML = "Select...";
+    def.hidden = true;
+    def.disabled = true;
+    def.selected = true;
+    selector.appendChild(def);
+    
     for(const key of Object.keys(mapping)) {
         const choice = document.createElement("option");
         choice.setAttribute("value", choice);
         choice.innerHTML = key;
         selector.appendChild(choice);
     }
+    base.onclick = () => {
+        base.remove();
+    }
     selector.onchange = () => {
         callback(mapping[selector.value]);
-    }
+        base.remove();
+    };
+    document.body.appendChild(base);
 }

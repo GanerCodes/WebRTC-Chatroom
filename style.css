@@ -2,28 +2,34 @@ html, body {
     background: #000; 
     size: 100%;
     margin: 0%;
+    padding: 0%;
 }
-.trackContainer, .selfContainer {
+.trackContainer, #selfContainer {
     display: flex;
-    height: 400px;
+    width: 100%;
+    flex-direction: row;
+    height: 128px;
+    padding: 5px;
+    margin: 0%;
     background: #020202;
-    padding: 3px;
-    border: 2px solid #222;
+}
+.trackContainer {
+    height: 512px;
 }
 .track, .selfTrack {
-    size: 400px;
-    border: 1px solid #555;
+    width: 100%;
+    /* border: 1px solid #555; */
 }
 
-.deviceSelectorHolder {
-    width: 100px;
-    height: 100px;
+#deviceSelectorHolder {
+    width: 128px;
+    height: 128px;
     display: flex;
     flex-wrap: wrap;
 }
 .addSourceButton {
-    width: 50px;
-    height: 50px;
+    width: 50%;
+    height: 50%;
     font-size: 14px;
     background-color: #111;
     color: #CCC;
@@ -41,8 +47,17 @@ html, body {
 }
 
 .audioTrack {
-    size: 200px;
-    background: #500;
+    height: 100%;
+    padding: 0px;
+    background-color: #333;
+    margin: 0px;
+}
+
+.trackBox {
+    border: 1px solid #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .selfContainer {
@@ -51,7 +66,33 @@ html, body {
     border: 1px solid #333;
 }
 .selfTrack {
-    width: 100px;
-    height: 100px;
+    /* width: 100px; */
+    height: auto;
+}
+.selfTrack, #deviceSelectorHolder {
     border: 1px solid #FFF;
+}
+
+.popupSelectorBase {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 50%;
+    left: 50%;
+    width: 50vw;
+    height: 50vh;
+    padding-bottom: 25vh;
+    background: #000C;
+    filter: blur(45%);
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    border: 8px solid #FFFC;
+    border-radius: 10vh;
+}
+.popupSelector {
+    width: 35vw;
+    height: 5vh;
+    background-color: #000;
+    color: #FFF;
 }

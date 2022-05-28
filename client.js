@@ -22,22 +22,11 @@ function addDevices(...devices) {
     for(const [device, type] of devices) {
         self['tracks'][device.id] = device;
         self['layout'][device.id] = type;
-        if(["video"].includes(type)) {
-            addSelfPreview(device.id);
-        }
+        addSelfPreview(device.id, type);
     }
     
     broadcastLayout();
     broadcastTracks(devices.map(x => x[0]));
-}
-
-function sendVideoDummy() {
-    navigator.mediaDevices.getUserMedia(
-        {"video": true, "audio": true}
-    ).then(stream => {
-        addDevices([new MediaStream([stream.getVideoTracks()[0]]), "video"],
-                   [new MediaStream([stream.getAudioTracks()[0]]), "audio"]);
-    })
 }
 
 function sendMessage(peer, type, message) {
