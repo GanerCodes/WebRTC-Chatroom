@@ -6,7 +6,7 @@
     </head>
     <body>
         <div id="selfContainer">
-            <div class="deviceSelectorHolder" id="deviceSelectorHolder"></div>
+            <div id="deviceSelectorHolder"></div>
             <script>
                 const base = document.getElementById("deviceSelectorHolder");
                 for(const t of ['cam', 'mic', 'spk', 'scr']) {
@@ -17,6 +17,10 @@
                     base.appendChild(elm);
                 }
             </script>
+            <div class="info">
+                <text class="infoText" id="roomNameText"></text>
+                <text class="infoText" id="userListText"></text>
+            </div>
         </div>
         <div id="streamContainer"></div>
         <script>

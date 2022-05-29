@@ -3,6 +3,7 @@ from uuid import uuid4
 from string import ascii_letters, digits
 
 clients = {}
+rooms = {}
 
 def make_id(charset=ascii_letters+digits):
     return ''.join(charset[i%len(charset)] for i in uuid4().bytes)
@@ -13,7 +14,28 @@ async def send(uuid, type_, dat):
 async def handle_data(dat, uuid):
     match dat['type']:
         case 'join':
-            for peer in clients:
+            if 'room' in clients[uuid]:
+                return
+            
+            client = clients[uuid]
+            
+            if 'room' not in dat:
+                await client['connection'].close()
+                return
+            
+            room_name = dat['room']
+            if room_name in rooms:
+                rooms[room_name][uuid] = client
+            else:
+                rooms[room_name] = {uuid: client}
+            client['room'] = room_name
+            
+            print(f'Room "{room_name}" + "{uuid}"')
+            
+            room = rooms[room_name]
+            if len(room) == 1: return
+            
+            for peer in room:
                 if peer == uuid: continue
                 await send(peer, 'addPeer', {'peer_uuid': uuid, 'create_offer': False})
                 await send(uuid, 'addPeer', {'peer_uuid': peer, 'create_offer': True })
@@ -40,8 +62,6 @@ async def handle_data(dat, uuid):
 
 async def server(websocket):
     clients[uuid := make_id()] = {'connection': websocket}
-    log = lambda x, c=False, uuid=uuid: print(f"{uuid}: {x}{f'| Total client count: {len(clients)}' if c else ''}")
-    log("+ Client", True)
     try:
         async for data in websocket:
             try:
@@ -52,12 +72,23 @@ async def server(websocket):
             
             await handle_data(dat, uuid)
     except Exception as err:
-        log(f"Error: `{err}`")
+        print(f"Closing {uuid}: {err}")
     finally:
+        if 'room' in clients[uuid]:
+            room_name = clients[uuid]['room']
+            if room_name in rooms:
+                room = rooms[room_name]
+                
+                if uuid in room:
+                    del room[uuid]
+                    print(f'Room "{room_name}" - "{uuid}"')
+                
+                if len(room) == 0:
+                    del rooms[room_name]
+                else:
+                    for peer in room:
+                        await send(peer, 'removePeer', { 'peer_uuid': uuid })
         del clients[uuid]
-        log(f"- Client", True)
-        for client in clients:
-            await send(client, 'removePeer', { 'peer_uuid': uuid })
 
 async def main():
     async with websockets.serve(server, "0.0.0.0", 4567):

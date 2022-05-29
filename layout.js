@@ -43,16 +43,42 @@ function createTrackElement(track, id, type) {
 function addSelfPreview(trackID, type) {
     const selfContainer = document.getElementById("selfContainer");
     const device = self['tracks'][trackID];
-    const elm = document.createElement("video");
+    let elm;
+    if(type == "audio") {
+        elm = document.createElement("div");
+        elm.className = "selfAudioTrack";
+        
+        const e = document.createElement("text");
+        e.className = "micLabel";
+        if(device['name']) e.innerHTML = device['name'];
+        elm.appendChild(e);
+    }else{
+        elm = document.createElement("video");
+        elm.className = "selfTrack";
+    }
     
     elm.setAttribute("autoplay", true);
     elm.muted = true;
-    
     elm.srcObject = device;
-    elm.setAttribute("id", trackID)
-    elm.className = "selfTrack";
     
-    selfContainer.appendChild(boxTrackElement(elm, SELF_SIZE));
+    const box = boxTrackElement(elm, SELF_SIZE);
+    box.setAttribute("id", trackID)
+    
+    const dev = [...device.getVideoTracks(), ...device.getAudioTracks()][0];
+    dev.onended = () => {
+        box.remove();
+        delete self['tracks'][trackID];
+        delete self['layout'][trackID];
+        broadcastRemoveTrack(trackID);
+        broadcastLayout();
+    };
+    
+    box.onclick = () => {
+        dev.stop();
+        dev.onended();
+    };
+    
+    selfContainer.appendChild(box);
 }
 
 function applyLayout(uuid, layout) {
@@ -78,7 +104,7 @@ function applyLayout(uuid, layout) {
     
     const currentTrackElements = container.getElementsByClassName("trackBox");
     for(const elm of currentTrackElements) {
-        if(!(elm.id in peer_tracks)) elm.remove();
+        if(elm.id != '' && !(elm.id in peer_tracks)) elm.remove();
     }
     
     for(const [id, type] of Object.entries(layout)) {
@@ -122,7 +148,6 @@ function addSourcePrompt(type) {
         switch(type) {
             case "cam": {
                 func = (l) => {
-                    print(l);
                     navigator.mediaDevices.getUserMedia({"video": true, label: l}).then(stream => {
                         addDevices([new MediaStream([stream.getVideoTracks()[0]]), "video"]);
                     });
@@ -131,20 +156,31 @@ function addSourcePrompt(type) {
             case "mic": {
                 func = (l) => {
                     navigator.mediaDevices.getUserMedia({"audio": true, label: l}).then(stream => {
-                        addDevices([new MediaStream([stream.getAudioTracks()[0]]), "audio"]);
+                        addDevices([new MediaStream([stream.getAudioTracks()[0]]), "audio", l.label]);
                     })
                 }
             } break;
+            case "spk": {
+                // TODO choose specific output depending on person
+                // also, add the ability to listen to your own mic
+                func = (l) => {
+                    const audio = document.querySelector('audio');
+                    audio.setSinkId(l.deviceId);
+                }
+            }
         }
         promptSelection(deviceNameMapping, func);
     });
 }
 
 function promptSelection(mapping, callback) {
+    if(previousBaseElm = document.getElementById("popupSelectionBase")) previousBaseElm.remove();
+    
     const base = document.createElement("div");
+    base.setAttribute("id", "popupSelectionBase");
     base.className = "popupSelectorBase";
     const selector = document.createElement("select");
-    selector.className = "popupSelector"
+    selector.className = "popupSelector";
     base.appendChild(selector);
     
     const def = document.createElement("option");
@@ -156,7 +192,7 @@ function promptSelection(mapping, callback) {
     
     for(const key of Object.keys(mapping)) {
         const choice = document.createElement("option");
-        choice.setAttribute("value", choice);
+        choice.setAttribute("value", key);
         choice.innerHTML = key;
         selector.appendChild(choice);
     }
@@ -168,4 +204,8 @@ function promptSelection(mapping, callback) {
         base.remove();
     };
     document.body.appendChild(base);
+}
+
+function updateUserListText() {
+    document.getElementById("userListText").innerHTML = "Users: " + ["You"].concat(Object.keys(peers)).join(", ");
 }

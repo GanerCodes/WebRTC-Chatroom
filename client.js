@@ -1,12 +1,16 @@
 const ICE_SERVERS = [{urls:"stun:stun.l.google.com:19302"}];
 
 var socket = new WebSocket("ws://localhost:4567");
+if(window.location.hash == "") window.location.hash = crypto.randomUUID();
+var room_name = window.location.hash;
+
 var peers = {};
 var self = {
     'layout': {},
     'tracks': {}
 };
 var printPeers = () => print(JSON.stringify(peers, null, 2));
+var printLog = (uuid, m) => print(`${uuid}: ${m}`);
 
 function send_data(data) {
     socket.send(JSON.stringify(data));
@@ -19,7 +23,8 @@ function broadcast(type, data) {
 }
 
 function addDevices(...devices) {
-    for(const [device, type] of devices) {
+    for(const [device, type, name] of devices) {
+        if(name) device.name = name;
         self['tracks'][device.id] = device;
         self['layout'][device.id] = type;
         addSelfPreview(device.id, type);
@@ -33,9 +38,14 @@ function sendMessage(peer, type, message) {
     send(peer, 'peerMessage', { 'message': { ...(message || {}), ...{ 'type': type } } })
 }
 function broadcastMessage(type, message) {
-    for(const uuid of Object.keys(peers)) {
-        sendMessage(uuid, type, message)
-    }
+    for(const uuid of Object.keys(peers)) sendMessage(uuid, type, message);
+}
+
+function removeTrack(uuid, trackID) {
+    sendMessage(uuid, 'removeTrack', {'trackID': trackID});
+}
+function broadcastRemoveTrack(trackID) {
+    broadcastMessage('removeTrack', {'trackID': trackID});
 }
 
 function sendLayout(uuid, layout) {
@@ -69,13 +79,20 @@ function handlePeerMessage(uuid, message) {
             if(!message['layout']) return;
             peers[uuid]['layout'] = message['layout'];
             applyLayout(uuid);
+            printLog(uuid, "Setting layout.")
         } break;
         case "getLayout": {
             sendLayout(uuid);
         } break;
         case "getTracks": {
             sendTracks(uuid);
-        }
+        } break;
+        case "removeTrack": {
+            if(!message['trackID']) return;
+            const id = message['trackID'];
+            if(id in peers[uuid]['tracks']) delete peers[uuid]['tracks'][id];
+            if(id in peers[uuid]['layout']) delete peers[uuid]['layout'][id];
+        } break;
     }
 }
 
@@ -116,9 +133,27 @@ function setup_peer_connection(peer_uuid, dat, connection) {
     if(dat['create_offer']) updateDescription(peer_uuid);
 }
 
+function register_peer(uuid, dat) {
+    let peer_connection = new RTCPeerConnection({"iceServers": ICE_SERVERS})
+    peers[uuid] = {'connection': peer_connection}
+    setup_peer_connection(uuid, dat, peer_connection);
+    sendMessage(uuid, "getLayout");
+    setTimeout(() => sendMessage(uuid, "getTracks"), 500);
+    updateUserListText();
+}
+
+function unregister_peer(uuid) {
+    if('connection' in peers[uuid])
+        peers[uuid]['connection'].close();
+    if(peers[uuid]['container']) peers[uuid]['container'].remove();
+    delete peers[uuid];
+    updateUserListText();
+}
+
 socket.onopen = () => {
     console.log("Connected to websocket.");
-    broadcast('join', {});
+    broadcast('join', {'room': room_name});
+    document.getElementById("roomNameText").innerHTML = `Room: "${room_name}"`;
 };
 
 socket.onmessage = (m) => {
@@ -132,19 +167,11 @@ socket.onmessage = (m) => {
     
     switch(dat['type']) {
         case "addPeer": {
-            let peer_connection = new RTCPeerConnection({"iceServers": ICE_SERVERS})
-            peers[peer_uuid] = {'connection': peer_connection}
-            setup_peer_connection(peer_uuid, dat, peer_connection);
-            sendMessage(peer_uuid, "getLayout");
-            setTimeout(() => sendMessage(peer_uuid, "getTracks"), 500);
+            register_peer(peer_uuid, dat);
             log(`+ Peer`);
         } break;
         case "removePeer": {
-            if('connection' in peers[peer_uuid])
-                peers[peer_uuid]['connection'].close();
-            if(peers[peer_uuid]['container']) peers[peer_uuid]['container'].remove();
-            delete peers[peer_uuid];
-            
+            unregister_peer(peer_uuid);
             log(`- Peer`);
         } break;
         case "sessionDescription": {
