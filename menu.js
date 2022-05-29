@@ -118,8 +118,8 @@ function create_menu(menu) {
 
 function create_floating_menu(e, menu) {
     const container = document.createElement("div");
-    container.style['left'] = e.clientX - 1 + "px";
-    container.style['top'] = e.clientY - 1 + "px";
+    container.style['left'] = e.clientX - 5 + "px";
+    container.style['top' ] = e.clientY - 5 + "px";
     container.className = "floating_menu_container";
     container.appendChild(create_menu(menu));
     document.body.appendChild(container)

@@ -26,6 +26,7 @@ function createTrackElement(track, id, type) {
         elm = document.createElement("video");
         elm.className = "track";
         elm.muted = true;
+        elm.ondblclick = () => elm.requestFullscreen();
     }else{
         elm = document.createElement("audio");
         elm.className = "audioTrack";
@@ -59,8 +60,8 @@ function createTrackElement(track, id, type) {
         const check = document.createElement("input");
         check.className = "peer_mute_checkbox";
         check.type = "checkbox";
-        check.checked = elm.paused;
         check.onchange = () => check.checked ? elm.pause() : elm.play();
+        check.checked = elm.muted || elm.paused;
         
         peerAudioOptionSpan.appendChild(mutedText);
         peerAudioOptionSpan.appendChild(check);

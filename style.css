@@ -39,9 +39,6 @@ input[type=range][orient=vertical] {
 .selfAudioTrack {
     width: 100%;
     height: 100%;
-    background: #200;
-}
-.selfAudioTrack {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -101,6 +98,7 @@ input[type=range][orient=vertical] {
     align-items: center;
     width: fit-content;
     height: fit-content;
+    background: none;
 }
 .trackBox, #deviceSelectorHolder {
     border: 1px solid #444;
@@ -118,7 +116,8 @@ input[type=range][orient=vertical] {
     border: 1px solid #333;
 }
 .selfTrack {
-    height: auto;
+    width: 100%;
+    height: 100%;
 }
 
 .info {
@@ -130,10 +129,10 @@ input[type=range][orient=vertical] {
     justify-content: space-between;
 }
 
-.selfAudioTrack:hover  { filter: blur(2px) grayscale(20%); cursor: hand; }
-.selfTrack:hover       { filter: blur(2px) grayscale(20%); cursor: hand; }
-.selfAudioTrack:active { filter: blur(5px) grayscale(35%); }
-.selfTrack:active      { filter: blur(5px) grayscale(35%); }
+.selfTrack:hover       { transform: scale(0.95); filter: blur(2px) grayscale(20%); cursor: hand; }
+.selfAudioTrack:hover  { transform: scale(0.95); filter: blur(2px) grayscale(20%); cursor: hand; }
+.selfTrack:active      { transform: scale(0.90); filter: blur(5px) grayscale(35%); }
+.selfAudioTrack:active { transform: scale(0.90); filter: blur(5px) grayscale(35%); }
 
 .floating_menu_container {
     position: fixed;

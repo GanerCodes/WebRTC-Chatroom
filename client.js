@@ -154,6 +154,7 @@ socket.onopen = () => {
     console.log("Connected to websocket.");
     broadcast('join', {'room': room_name});
     document.getElementById("roomNameText").innerHTML = `Room: "${room_name}"`;
+    updateUserListText();
 };
 
 socket.onmessage = (m) => {
