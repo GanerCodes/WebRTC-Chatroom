@@ -5,25 +5,8 @@ html, body {
     margin: 0%;
     padding: 0%;
 }
-.trackContainer, #selfContainer {
-    display: flex;
-    width: 100%;
-    flex-direction: row;
-    height: 128px;
-    box-sizing: border-box;
-    padding: 10px;
-    background: #020202;
-}
-.trackContainer {
-    height: 512px;
-}
-.track, .selfTrack {
-    width: 100%;
-}
-.selfAudioTrack {
-    width: 100%;
-    height: 100%;
-    background: #200;
+input[type=range][orient=vertical] {
+    -webkit-appearance: slider-vertical;
 }
 
 #deviceSelectorHolder {
@@ -50,18 +33,74 @@ html, body {
     background-color: #222;
     color: #FFF;
 }
-
-.audioTrack {
-    height: 100%;
-    padding: 0px;
-    background-color: #333;
-    margin: 0px;
+.selfTrack {
+    width: 100%;
 }
-
-.trackBox, .selfAudioTrack {
+.selfAudioTrack {
+    width: 100%;
+    height: 100%;
+    background: #200;
+}
+.selfAudioTrack {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.trackContainer, #selfContainer {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    box-sizing: border-box;
+    padding: 5px;
+    background: #020202;
+}
+#selfContainer {
+    margin-bottom: 2px;
+    border-bottom: 2px solid #888;
+}
+.trackContainer {
+    min-height: 200px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+    border-bottom: 2px solid #888;
+}
+.track {
+    width: -webkit-fill-available;
+    height: -webkit-fill-available;
+}
+.audioTrack {
+    width: 0px;
+    height: 0px;
+}
+.peer_volume_range {
+    position: relative;
+    height: 75%;
+    outline: none;
+    border: none;
+}
+.peerAudioOptionSpan {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25%;
+    vertical-align: middle;
+}
+.peer_mute_checkbox {
+    align-self: center;
+}
+.mutedText {
+    color: #FFF;
+    margin-right: 5px;
+    margin-bottom: 3.5px;
+}
+.trackBox {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
 }
 .trackBox, #deviceSelectorHolder {
     border: 1px solid #444;
@@ -73,7 +112,6 @@ html, body {
     text-align: center;
     color: #FFF;
 }
-
 .selfContainer {
     display: flex;
     size: 100px;
@@ -86,15 +124,10 @@ html, body {
 .info {
     color: #FFF;
     display: flex;
-    height: 128px;
     flex-direction: column;
-    padding-left: 3px;
-    padding-right: 3px;
+    padding-left: 10px;
+    padding-top: 3px;
     justify-content: space-between;
-}
-
-.infoText {
-    margin: 3px;
 }
 
 .selfAudioTrack:hover  { filter: blur(2px) grayscale(20%); cursor: hand; }
@@ -102,7 +135,66 @@ html, body {
 .selfAudioTrack:active { filter: blur(5px) grayscale(35%); }
 .selfTrack:active      { filter: blur(5px) grayscale(35%); }
 
-.popupSelectorBase {
+.floating_menu_container {
+    position: fixed;
+    z-index: 3;
+    background: #000A;
+    backdrop-filter: blur(2px);
+}
+.menu_container {
+    width: fit-content;
+    height: fit-content;
+}
+.menu_container * {
+    color: #FFF;
+}
+.menu_span {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-left: 3px;
+    padding-right: 3px;
+    width: auto;
+    min-height: 25px;
+    border: solid #FFF;
+    border-width: 1px 1px 0px 1px;
+}
+.menu_span:last-child {
+    border-width: 1px 1px 1px 1px;
+}
+.menu_span > * {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+.menu_span:hover {
+    background: #FFF2;
+}
+
+.menu_button {
+    background: none;
+    text-align: left;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.menu_button:hover {
+    cursor: hand;
+}
+.menu_button:active {
+    background: #FFF1;
+}
+.menu_checkbox {
+    position: relative;
+    float: right;
+}
+.menu_range_div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* .popupSelectorBase {
     position: absolute;
     display: flex;
     justify-content: center;
@@ -124,4 +216,4 @@ html, body {
     height: 2vw;
     background-color: #000;
     color: #FFF;
-}
+} */

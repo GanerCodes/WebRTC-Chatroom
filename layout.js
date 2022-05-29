@@ -1,5 +1,7 @@
-const SELF_SIZE = 128;
-const OTHER_SIZE = 512;
+const SELF_SIZE = [128, 128];
+
+const OTHER_SIZE_VIDEO = [512, 512];
+const OTHER_SIZE_AUDIO = [128, 512];
 
 function createTrackContainer(uuid) {
     const elm = document.createElement("div");
@@ -12,10 +14,9 @@ function createTrackContainer(uuid) {
 function boxTrackElement(element, size) {
     let elm = document.createElement("div");
     elm.className = "trackBox";
-    const sz = size + "px";
     elm.appendChild(element);
-    elm.style['width' ] = sz;
-    elm.style['height'] = sz;
+    elm.style['width' ] = size[0];
+    elm.style['height'] = size[1];
     return elm;
 }
 
@@ -27,7 +28,7 @@ function createTrackElement(track, id, type) {
         elm.muted = true;
     }else{
         elm = document.createElement("audio");
-        elm.className = "track audioTrack";
+        elm.className = "audioTrack";
         elm.muted = false;
         elm.controls = true;
     }
@@ -35,9 +36,65 @@ function createTrackElement(track, id, type) {
     elm.setAttribute("autoplay", true);
     elm.srcObject = new MediaStream([track]);
     
-    elm = boxTrackElement(elm, OTHER_SIZE);
-    elm.setAttribute("id", id);
-    return elm;
+    const boxed_elm = boxTrackElement(elm, type == "audio" ? OTHER_SIZE_AUDIO : OTHER_SIZE_VIDEO);
+    boxed_elm.setAttribute("id", id);
+    
+    if(type == "audio") {
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.className = "peer_volume_range";
+        slider.setAttribute("orient", "vertical");
+        slider.min = 0;
+        slider.max = 100;
+        slider.value = 50;
+        slider.onchange = () => elm.volume = slider.value / slider.max;
+        
+        const peerAudioOptionSpan = document.createElement("span");
+        peerAudioOptionSpan.className = "peerAudioOptionSpan";
+        
+        const mutedText = document.createElement("text");
+        mutedText.className = "mutedText";
+        mutedText.innerHTML = "Mute";
+        
+        const check = document.createElement("input");
+        check.className = "peer_mute_checkbox";
+        check.type = "checkbox";
+        check.checked = elm.paused;
+        check.onchange = () => check.checked ? elm.pause() : elm.play();
+        
+        peerAudioOptionSpan.appendChild(mutedText);
+        peerAudioOptionSpan.appendChild(check);
+        
+        boxed_elm.appendChild(peerAudioOptionSpan);
+        boxed_elm.appendChild(slider);
+    }else{
+        boxed_elm.oncontextmenu = (e) => {
+            e.preventDefault();
+            boxed_elm.oncontextmenusave = boxed_elm.oncontextmenu;
+            boxed_elm.oncontextmenu = () => 0;
+            const g = (x) => Number(x.replace(/px/, ""))
+            const sty = boxed_elm.style;
+            const startEvent = e;
+            const startSize = [g(sty.width), g(sty.height)]
+            window.onmousemove = (e) => {
+                e.preventDefault();
+                sty.width  = Math.max(42, startSize[0] + (e.clientX - startEvent.clientX)) + "px";
+                sty.height = Math.max(42, startSize[1] + (e.clientY - startEvent.clientY)) + "px";
+            };
+            setTimeout(() => {
+                window.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    window.onmousemove = () => 0;
+                    window.oncontextmenu = () => 0;
+                    boxed_elm.oncontextmenu = boxed_elm.oncontextmenusave;
+                }
+            }, 10);
+            // sty['width'] = 2 * g(sty['width']) + "px";
+            // sty['height'] = 2 * g(sty['height']) + "px";
+        }
+    }
+    
+    return boxed_elm;
 }
 
 function addSelfPreview(trackID, type) {
@@ -128,7 +185,7 @@ function removeDisconnectedStreamElements() {
     }
 }
 
-function addSourcePrompt(type) {
+function addSourcePrompt(type, event) {
     if(type == "scr") {
         navigator.mediaDevices.getDisplayMedia().then(s => {
             addDevices([new MediaStream([s.getVideoTracks()[0]]), "video"]);
@@ -165,45 +222,18 @@ function addSourcePrompt(type) {
                 // also, add the ability to listen to your own mic
                 func = (l) => {
                     const audio = document.querySelector('audio');
-                    audio.setSinkId(l.deviceId);
+                    if(audio) {
+                        audio.setSinkId(l.deviceId);
+                    }
                 }
             }
         }
-        promptSelection(deviceNameMapping, func);
+        floating_menu(type, event, Object.entries(deviceNameMapping).map(([k, v]) => (
+            {'type': 'button',
+             'label': k,
+             'exit': true,
+             'func': () => func(v)})));
     });
-}
-
-function promptSelection(mapping, callback) {
-    if(previousBaseElm = document.getElementById("popupSelectionBase")) previousBaseElm.remove();
-    
-    const base = document.createElement("div");
-    base.setAttribute("id", "popupSelectionBase");
-    base.className = "popupSelectorBase";
-    const selector = document.createElement("select");
-    selector.className = "popupSelector";
-    base.appendChild(selector);
-    
-    const def = document.createElement("option");
-    def.innerHTML = "Select...";
-    def.hidden = true;
-    def.disabled = true;
-    def.selected = true;
-    selector.appendChild(def);
-    
-    for(const key of Object.keys(mapping)) {
-        const choice = document.createElement("option");
-        choice.setAttribute("value", key);
-        choice.innerHTML = key;
-        selector.appendChild(choice);
-    }
-    base.onclick = () => {
-        base.remove();
-    }
-    selector.onchange = () => {
-        callback(mapping[selector.value]);
-        base.remove();
-    };
-    document.body.appendChild(base);
 }
 
 function updateUserListText() {
