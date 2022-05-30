@@ -1,6 +1,7 @@
 const ICE_SERVERS = [{urls:"stun:stun.l.google.com:19302"}];
 
-var socket = new WebSocket("ws://localhost:4567");
+
+var socket = new WebSocket(`wss://${window.location.host}:2096`);
 if(window.location.hash == "") window.location.hash = crypto.randomUUID();
 var room_name = window.location.hash;
 

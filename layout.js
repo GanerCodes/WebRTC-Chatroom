@@ -188,12 +188,22 @@ function removeDisconnectedStreamElements() {
 
 function addSourcePrompt(type, event) {
     if(type == "scr") {
-        navigator.mediaDevices.getDisplayMedia().then(s => {
-            addDevices([new MediaStream([s.getVideoTracks()[0]]), "video"]);
+        navigator.mediaDevices.getDisplayMedia({video: true, audio : true}).then(s => {
+            let videoTracks = s.getVideoTracks();
+            let audioTracks = s.getAudioTracks();
+            
+            print(videoTracks, audioTracks)
+            
+            let devices =   [[new MediaStream([videoTracks[0]]), "video"]];
+            if(audioTracks.length > 0) {
+                devices.push([new MediaStream([audioTracks[0]]), "audio"]);
+            }
+            addDevices(...devices);
         });
         return;
     }
-    
+    navigator.mediaDevices.getUserMedia({"video": true, "audio": true}).then(() => { // Needed to make permissions pop up???
+        
     navigator.mediaDevices.enumerateDevices().then(device_list => {
         const mapping = {'cam': 'videoinput',
                          'mic': 'audioinput',
@@ -234,6 +244,8 @@ function addSourcePrompt(type, event) {
              'label': k,
              'exit': true,
              'func': () => func(v)})));
+    });
+    
     });
 }
 

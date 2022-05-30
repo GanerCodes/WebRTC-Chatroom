@@ -91,7 +91,7 @@ async def server(websocket):
         del clients[uuid]
 
 async def main():
-    async with websockets.serve(server, "0.0.0.0", 4567):
+    async with websockets.serve(server, "127.0.0.1", 2000):
         await asyncio.Future()
 
 asyncio.run(main())
