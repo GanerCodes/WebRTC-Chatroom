@@ -90,8 +90,6 @@ function createTrackElement(track, id, type) {
                     boxed_elm.oncontextmenu = boxed_elm.oncontextmenusave;
                 }
             }, 10);
-            // sty['width'] = 2 * g(sty['width']) + "px";
-            // sty['height'] = 2 * g(sty['height']) + "px";
         }
     }
     
@@ -184,6 +182,18 @@ function removeDisconnectedStreamElements() {
     for(const elm of document.getElementById("trackContainer")) {
         if(!(elm.id in peers)) elm.remove();
     }
+}
+
+function addDevices(...devices) {
+    for(const [device, type, name] of devices) {
+        if(name) device.name = name;
+        self['tracks'][device.id] = device;
+        self['layout'][device.id] = type;
+        addSelfPreview(device.id, type);
+    }
+    
+    broadcastLayout();
+    broadcastTracks(devices.map(x => x[0]));
 }
 
 function addSourcePrompt(type, event) {

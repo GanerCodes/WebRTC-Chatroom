@@ -1,47 +1,31 @@
+from util import *
 import websockets, asyncio, json
-from uuid import uuid4
-from string import ascii_letters, digits
-
-clients = {}
-rooms = {}
-
-def make_id(charset=ascii_letters+digits):
-    return ''.join(charset[i%len(charset)] for i in uuid4().bytes)
-
-async def send(uuid, type_, dat):
-    await clients[uuid]['connection'].send(json.dumps(dat | {'type': type_}))
+import messaging
 
 async def handle_data(dat, uuid):
     match dat['type']:
         case 'join':
-            if 'room' in clients[uuid]:
-                return
-            
-            client = clients[uuid]
-            
+            if 'room' in clients[uuid]: return
             if 'room' not in dat:
                 await client['connection'].close()
                 return
             
-            room_name = dat['room']
-            if room_name in rooms:
-                rooms[room_name][uuid] = client
-            else:
-                rooms[room_name] = {uuid: client}
-            client['room'] = room_name
+            client = clients[uuid]
+            client['room'] = squash(dat['room'])
+            room_name, room, members = get_client_room(uuid)
             
             print(f'Room "{room_name}" + "{uuid}"')
             
-            room = rooms[room_name]
-            if len(room) == 1: return
+            if len(members) == 1: return
             
-            for peer in room:
+            for peer in members:
                 if peer == uuid: continue
                 await send(peer, 'addPeer', {'peer_uuid': uuid, 'create_offer': False})
                 await send(uuid, 'addPeer', {'peer_uuid': peer, 'create_offer': True })
         
         case 'relayICECandidate'|'relaySessionDescription'|'peerMessage' as choice:
-            if (peer_uuid := dat['peer_uuid']) not in clients: return
+            if (peer_uuid := dat['peer_uuid']) not in clients:
+                return
             
             match choice:
                 case 'relayICECandidate':
@@ -55,10 +39,16 @@ async def handle_data(dat, uuid):
                         'session_description': dat['session_description']})
                 
                 case 'peerMessage':
-                    await send(peer_uuid, 'peerMessage', {
-                        'peer_uuid': uuid,
-                        'message': dat['message']
-                    })
+                    await messaging.send_peer_message(uuid, peer_uuid, dat['message'])
+        
+        case 'getMessages':
+            await messaging.send_peer_message("server", uuid, {
+                "type": "chatMessages",
+                "messages": messaging.get_n_messages(clients[uuid]['room'], limit=250)
+            })
+        
+        case 'chatMessage':
+            await messaging.send_chat_message(uuid, dat['message'])
 
 async def server(websocket):
     clients[uuid := make_id()] = {'connection': websocket}
@@ -73,25 +63,24 @@ async def server(websocket):
             await handle_data(dat, uuid)
     except Exception as err:
         print(f"Closing {uuid}: {err}")
+        raise err
     finally:
         if 'room' in clients[uuid]:
-            room_name = clients[uuid]['room']
-            if room_name in rooms:
-                room = rooms[room_name]
-                
-                if uuid in room:
-                    del room[uuid]
-                    print(f'Room "{room_name}" - "{uuid}"')
-                
-                if len(room) == 0:
-                    del rooms[room_name]
-                else:
-                    for peer in room:
-                        await send(peer, 'removePeer', { 'peer_uuid': uuid })
+            room_name, room, _ = get_client_room(uuid, add_client=False)
+            
+            if uuid in room['members']:
+                del room['members'][uuid]
+            print(f'Room "{room_name}" - "{uuid}"')
+            
+            if len(room['members']) == 0:
+                del rooms[room_name]
+            else:
+                for peer in room['members']:
+                    await send(peer, 'removePeer', { 'peer_uuid': uuid })
         del clients[uuid]
 
 async def main():
-    async with websockets.serve(server, "127.0.0.1", 2000):
+    async with websockets.serve(server, "127.0.0.1", PORT):
         await asyncio.Future()
 
 asyncio.run(main())

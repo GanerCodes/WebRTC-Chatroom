@@ -1,7 +1,9 @@
+const PORT = 2000;
+
+const PROTO = window.location.protocol == "http:" ? "ws" : "wss";
+const URL = `${PROTO}://${window.location.hostname}:${PORT}`;
 const ICE_SERVERS = [{urls:"stun:stun.l.google.com:19302"}];
 
-
-var socket = new WebSocket(`wss://${window.location.host}:2096`);
 if(window.location.hash == "") window.location.hash = crypto.randomUUID();
 var room_name = window.location.hash;
 
@@ -12,27 +14,22 @@ var self = {
 };
 var printPeers = () => print(JSON.stringify(peers, null, 2));
 var printLog = (uuid, m) => print(`${uuid}: ${m}`);
+var send_data = (data) => socket.send(JSON.stringify(data));
 
-function send_data(data) {
-    socket.send(JSON.stringify(data));
-}
+var socket = new WebSocket(URL);
+
 function send(peer, type, data) {
-    send_data({ ...data, ...{'type': type}, ...{'peer_uuid': peer} });
+    send_data({
+        ...data,
+        ...{'type': type},
+        ...{'peer_uuid': peer}
+    });
 }
-function broadcast(type, data) {
-    send_data({ ...data, ...{'type': type} });
-}
-
-function addDevices(...devices) {
-    for(const [device, type, name] of devices) {
-        if(name) device.name = name;
-        self['tracks'][device.id] = device;
-        self['layout'][device.id] = type;
-        addSelfPreview(device.id, type);
-    }
-    
-    broadcastLayout();
-    broadcastTracks(devices.map(x => x[0]));
+function send_server(type, data) {
+    send_data({
+        ...data,
+        ...{'type': type}
+    });
 }
 
 function sendMessage(peer, type, message) {
@@ -54,6 +51,13 @@ function sendLayout(uuid, layout) {
 }
 function broadcastLayout(layout) {
     broadcastMessage('setLayout', {'layout': layout || self['layout']});
+}
+
+function send_chat_message(message) {
+    send_server("chatMessage", {'message': message})
+}
+function get_chat_messages() {
+    send_server("getMessages", {})
 }
 
 function sendTrack(uuid, track) {
@@ -94,6 +98,10 @@ function handlePeerMessage(uuid, message) {
             if(id in peers[uuid]['tracks']) delete peers[uuid]['tracks'][id];
             if(id in peers[uuid]['layout']) delete peers[uuid]['layout'][id];
         } break;
+        case "chatMessages": {
+            if(!message['messages']) return;
+            print("GOT CHAT MESSAGES: ", message['messages'])
+        }
     }
 }
 
@@ -153,13 +161,14 @@ function unregister_peer(uuid) {
 
 socket.onopen = () => {
     console.log("Connected to websocket.");
-    broadcast('join', {'room': room_name});
+    send_server('join', {'room': room_name});
     document.getElementById("roomNameText").innerHTML = `Room: "${room_name}"`;
     updateUserListText();
 };
 
 socket.onmessage = (m) => {
     let dat = JSON.parse(m['data']);
+    print(dat);
     let peer_uuid = dat['peer_uuid'];
     let log = (x) => print(`${peer_uuid}: ${x} | Total peer count: ${Object.keys(peers).length}`);
     
