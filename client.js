@@ -8,10 +8,8 @@ if(window.location.hash == "") window.location.hash = crypto.randomUUID();
 var room_name = window.location.hash;
 
 var peers = {};
-var self = {
-    'layout': {},
-    'tracks': {}
-};
+var self = { 'layout': {}, 'tracks': {} };
+var chat = [];
 var printPeers = () => print(JSON.stringify(peers, null, 2));
 var printLog = (uuid, m) => print(`${uuid}: ${m}`);
 var send_data = (data) => socket.send(JSON.stringify(data));
@@ -100,7 +98,7 @@ function handlePeerMessage(uuid, message) {
         } break;
         case "chatMessages": {
             if(!message['messages']) return;
-            print("GOT CHAT MESSAGES: ", message['messages'])
+            handleChatMessage(message);
         }
     }
 }
@@ -164,15 +162,15 @@ socket.onopen = () => {
     send_server('join', {'room': room_name});
     document.getElementById("roomNameText").innerHTML = `Room: "${room_name}"`;
     updateUserListText();
+    send_server('getMessages', {})
 };
 
 socket.onmessage = (m) => {
     let dat = JSON.parse(m['data']);
-    print(dat);
     let peer_uuid = dat['peer_uuid'];
     let log = (x) => print(`${peer_uuid}: ${x} | Total peer count: ${Object.keys(peers).length}`);
     
-    if(!(peer_uuid in peers)) {
+    if(!(peer_uuid in peers) && peer_uuid != "server") {
         peers[peer_uuid] = {};
     }
     

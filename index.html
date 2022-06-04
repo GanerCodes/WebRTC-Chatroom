@@ -5,34 +5,43 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <div class="info">
-            <text class="infoText" id="roomNameText"></text>
-            <text class="infoText" id="userListText"></text>
-        </div>
-        <div id="selfContainer">
-            <div id="deviceSelectorHolder"></div>
+        <div id="mainArea">
+            <div class="info">
+                <text class="infoText" id="roomNameText"></text>
+                <text class="infoText" id="userListText"></text>
+            </div>
+            <div id="selfContainer">
+                <div id="deviceSelectorHolder"></div>
+                <script>
+                    const base = document.getElementById("deviceSelectorHolder");
+                    for(const t of ['cam', 'mic', 'spk', 'scr']) {
+                        const elm = document.createElement("button");
+                        elm.className = "addSourceButton";
+                        elm.innerHTML = t;
+                        elm.onclick = (e) => addSourcePrompt(t, e);
+                        base.appendChild(elm);
+                    }
+                </script>
+            </div>
+            <div id="streamContainer"></div>
             <script>
-                const base = document.getElementById("deviceSelectorHolder");
-                for(const t of ['cam', 'mic', 'spk', 'scr']) {
-                    const elm = document.createElement("button");
-                    elm.className = "addSourceButton";
-                    elm.innerHTML = t;
-                    elm.onclick = (e) => addSourcePrompt(t, e);
-                    base.appendChild(elm);
+                var print = console.log;
+                
+                function addDynamicJS(script) {
+                    let elm = document.createElement("script");
+                    elm.setAttribute("src", script);
+                    document.body.appendChild(elm);
                 }
+                
+                ["layout.js", "menu.js", "client.js", "chat.js"].forEach(addDynamicJS);
             </script>
         </div>
-        <div id="streamContainer"></div>
-        <script>
-            var print = console.log;
-            
-            function addDynamicJS(script) {
-                let elm = document.createElement("script");
-                elm.setAttribute("src", script);
-                document.body.appendChild(elm);
-            }
-            
-            ["layout.js", "menu.js", "client.js"].forEach(addDynamicJS);
-        </script>
+        <div id="chatWindow">
+            <div id="chatTextArea"></div>
+            <div id="chatInputContainer">
+                <input id="chatInput" onkeypress="chatboxKeypress(event, this)">
+            </div>
+        </div>    
+        <button class="addSourceButton" id="toggleChatButton" onclick="let s=document.getElementById('chatWindow').style;s['display']=s['display']=='none'?'block':'none'">cht</button>
     </body>
 </html>
