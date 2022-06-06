@@ -7,4 +7,4 @@ Simple WebRTC Voice/video/screenshare/chat service. Simply generate a room and s
 If you don't have a webserver:  
 `python -m http.server`  
   
-Change port in `util.py` file
+Used ports / ICE servers located in `util.py` and `client.js` files
