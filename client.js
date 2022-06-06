@@ -2,26 +2,7 @@ const PORT = 2000;
 
 const PROTO = window.location.protocol == "http:" ? "ws" : "wss";
 const URL = `${PROTO}://${window.location.hostname}:${PORT}`;
-const ICE_SERVERS = [
-    {
-      urls: "stun:openrelay.metered.ca:80",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-  ];
+const ICE_SERVERS = [{urls: "stun:openrelay.metered.ca:80"}];
 
 if(window.location.hash == "") window.location.hash = crypto.randomUUID();
 var room_name = window.location.hash;
