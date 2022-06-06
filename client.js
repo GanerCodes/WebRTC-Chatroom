@@ -1,4 +1,4 @@
-const PORT = 2000;
+const PORT = 2096;
 
 const PROTO = window.location.protocol == "http:" ? "ws" : "wss";
 const URL = `${PROTO}://${window.location.hostname}:${PORT}`;
