@@ -2,7 +2,7 @@ const PORT = 2000;
 
 const PROTO = window.location.protocol == "http:" ? "ws" : "wss";
 const URL = `${PROTO}://${window.location.hostname}:${PORT}`;
-const ICE_SERVERS = [{urls: "stun:openrelay.metered.ca:80"}];
+const ICE_SERVERS = [{urls: "stun:stunprotocol:3478"}];
 
 if(window.location.hash == "") window.location.hash = crypto.randomUUID();
 var room_name = window.location.hash;
