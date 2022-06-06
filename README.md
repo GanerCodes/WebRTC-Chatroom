@@ -1,4 +1,4 @@
-# WebRTC  
+# WebRTC Chatroom  
   
 Simple WebRTC Voice/video/screenshare/chat service. Simply generate a room and send the URL to your friends!  
   
