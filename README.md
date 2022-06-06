@@ -5,4 +5,6 @@ Simple WebRTC Voice/video/screenshare/chat service. Simply generate a room and s
 `pip install websockets, asyncio`  
 `python server.py`  
 If you don't have a webserver:  
-`python -m http.server`
+`python -m http.server`  
+  
+Change port in `util.py` file
